@@ -96,6 +96,7 @@ export function FormComponent() {
           validationBehavior="native"
         >
           <Input
+            isClearable
             isRequired
             errorMessage="Por favor, ingresa un nombre"
             name="name"
@@ -106,6 +107,7 @@ export function FormComponent() {
             type="text"
           />
           <Input
+            isClearable
             isRequired
             errorMessage="Por favor, ingresa un nombre de empresa"
             name="nameCompany"
@@ -116,6 +118,7 @@ export function FormComponent() {
             type="text"
           />
           <Input
+          isClearable
             isRequired
             errorMessage="Por favor, ingresa un correo electrónico"
             name="email"
