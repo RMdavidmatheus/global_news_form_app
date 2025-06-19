@@ -1,29 +1,14 @@
-import { Button, Form, Input, Select, SelectItem } from "@heroui/react";
+import { Button, Form, Input, Select, SelectItem, addToast } from "@heroui/react";
 import type { Key } from "@react-types/shared";
 import { useState } from "react";
+import axios from "axios";
+import type { FormWebModel } from "../models/formModel";
 
 export function FormComponent() {
-  const [submitted, setSubmitted] = useState<{
-    [k: string]: FormDataEntryValue;
-  } | null>(null);
-
   const [sectorValue, setSectorValue] = useState<Set<Key>>(new Set([]));
   const [completed, setCompleted] = useState(false);
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const form = e.currentTarget;
-    if (form.checkValidity()) {
-      const data = Object.fromEntries(new FormData(e.currentTarget));
-      setSubmitted(data);
-      setCompleted(true);
-    } else {
-      form.reportValidity();
-      setCompleted(false);
-    }
-  };
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const sectorTypes = [
     { key: "salud", label: "Salud" },
@@ -33,6 +18,67 @@ export function FormComponent() {
     { key: "tecnologia", label: "Tecnologia" },
     { key: "otros", label: "Otros" },
   ];
+
+  //* Replacing the data on db and returning true or false
+  const fetchData = async (data: FormWebModel) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:3000/form-data`,
+        data
+      );
+      if (response.status !== 201 && !response.data) {
+        return false;
+      }
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const form = e.currentTarget;
+
+    if (form.checkValidity()) {
+      setIsLoading(true);
+      try {
+        const objectData = Object.fromEntries(new FormData(e.currentTarget));
+        const bodyFetch: FormWebModel = {
+          name_client: objectData.name as string,
+          name_company: objectData.nameCompany as string,
+          email_client: objectData.email as string,
+          sector_client: objectData.sector as string,
+        };
+        const result = await fetchData(bodyFetch);
+        if (result) {
+          setCompleted(true);
+          addToast({
+            title: "Envio exitoso",
+            description: "Se ha enviado tu solicitud correctamente",
+            color: "success",
+          });
+        }
+        form.reset();
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+        addToast({
+          title: "Error",
+          description: "No se pudo enviar tu solicitud, por favor intenta nuevamente",
+          color: "danger",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      form.reportValidity();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-3 p-6 max-w-4xl mx-auto">
@@ -46,7 +92,7 @@ export function FormComponent() {
       <div className="flex flex-col pt-5">
         <Form
           className="w-full max-w-xs gap-3"
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit}
           validationBehavior="native"
         >
           <Input
@@ -99,21 +145,16 @@ export function FormComponent() {
               <SelectItem key={sector.key}>{sector.label}</SelectItem>
             ))}
           </Select>
-          <p>{sectorValue}</p>
 
           <Button
             type="submit"
             variant="flat"
             color="primary"
             className="w-[550px]"
+            isLoading={isLoading}
           >
             Enviar
           </Button>
-          {submitted && (
-            <div className="text-small text-default-500">
-              You submitted: <code>{JSON.stringify(submitted)}</code>
-            </div>
-          )}
         </Form>
       </div>
     </div>
