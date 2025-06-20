@@ -1,14 +1,25 @@
-import { Button, Form, Input, Select, SelectItem, addToast } from "@heroui/react";
+import {
+  Button,
+  Form,
+  Input,
+  Select,
+  SelectItem,
+  addToast,
+} from "@heroui/react";
 import type { Key } from "@react-types/shared";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import type { FormWebModel } from "../models/formModel";
 
 export function FormComponent() {
   const [sectorValue, setSectorValue] = useState<Set<Key>>(new Set([]));
-  const [completed, setCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  //* Log the error
+  useEffect(() => {
+    if (error) console.log(error);
+  });
 
   const sectorTypes = [
     { key: "salud", label: "Salud" },
@@ -56,12 +67,20 @@ export function FormComponent() {
           sector_client: objectData.sector as string,
         };
         const result = await fetchData(bodyFetch);
+        console.log("result", result);
         if (result) {
-          setCompleted(true);
           addToast({
             title: "Envio exitoso",
             description: "Se ha enviado tu solicitud correctamente",
             color: "success",
+          });
+          setError(null);
+        } else {
+          addToast({
+            title: "Error",
+            description:
+              "No se pudo enviar tu solicitud, por favor intenta nuevamente",
+            color: "danger",
           });
         }
         form.reset();
@@ -69,7 +88,8 @@ export function FormComponent() {
         console.error("Error fetching data: ", error);
         addToast({
           title: "Error",
-          description: "No se pudo enviar tu solicitud, por favor intenta nuevamente",
+          description:
+            "No se pudo enviar tu solicitud, por favor intenta nuevamente",
           color: "danger",
         });
       } finally {
@@ -96,6 +116,7 @@ export function FormComponent() {
           validationBehavior="native"
         >
           <Input
+            aria-label="Ingresa tu nombre"
             isClearable
             isRequired
             errorMessage="Por favor, ingresa un nombre"
@@ -107,6 +128,7 @@ export function FormComponent() {
             type="text"
           />
           <Input
+            aria-label="Ingresa el nombre de tu empresa"
             isClearable
             isRequired
             errorMessage="Por favor, ingresa un nombre de empresa"
@@ -118,7 +140,8 @@ export function FormComponent() {
             type="text"
           />
           <Input
-          isClearable
+            aria-label="Ingresa tu correo electrónico"
+            isClearable
             isRequired
             errorMessage="Por favor, ingresa un correo electrónico"
             name="email"
@@ -130,6 +153,7 @@ export function FormComponent() {
           />
 
           <Select
+            aria-label="Selecciona tu sector"
             isRequired
             errorMessage="Por favor, selecciona un sector"
             className="w-[550px]"
