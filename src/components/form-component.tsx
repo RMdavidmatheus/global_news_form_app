@@ -34,7 +34,7 @@ export function FormComponent() {
   const fetchData = async (data: FormWebModel) => {
     try {
       const response = await axios.post(
-        `https://global-news-form-service-tp6d.onrender.com/form-data`,
+        `https://global-news-form-service-elysia.onrender.com/form-data`,
         data
       );
       if (response.status !== 201 && !response.data) {
